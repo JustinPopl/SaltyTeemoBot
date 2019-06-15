@@ -4,14 +4,14 @@ from PIL import Image
 from pytesseract import image_to_string
 from pyautogui import typewrite, click, press, hotkey
 
-
-blue_rank_coord = [1150, 380, 1400, 700]
-red_rank_coord = [1150, 710, 1400, 1025]
-screen_coord = [1260, 95, 1465, 120]
-chat_coord = [1670, 950]
-bet_amount = 500
-bet_success_sleep = 300
-bet_fail_sleep = 60
+# Initialize variables
+blue_rank_coord = [1150, 380, 1400, 700]  # Screen coordinates of blue team ranks
+red_rank_coord = [1150, 710, 1400, 1025]  # Screen coordinates of red team ranks
+screen_coord = [1260, 95, 1465, 120]  # Screen coordinates of bet status
+chat_coord = [1670, 950]  # Screen coordinates within chat box
+bet_amount = 500  # Amount to bet
+bet_success_sleep = 300  # Time between successful bets
+bet_fail_sleep = 60  # Time between failed bets
 bet_status = False
 bet_blue = f'!blue {bet_amount}'
 bet_red = f'!red {bet_amount}'
@@ -23,6 +23,7 @@ red_image = 'C:\\Users\\Justin\\Desktop\\red_rank.png'
 website = 'https://gameinfo.saltyteemo.com/'
 
 
+# Compares the ranks between the two teams, scores them, and returns the team with the highest score
 def compare():
 
     click(red_rank_coord[0] / 2, red_rank_coord[1], 1)
@@ -121,8 +122,9 @@ if __name__ == '__main__':
 
         if 'open' in bet_state.lower():
 
+            # Compares the teams and bets on the team with the highest score
             team = compare()
-            if team == 0:
+            if team == 0:  # Bet on blue team
                 click(chat_coord[0], chat_coord[1], 1)
                 typewrite(bet_blue)
                 press('enter')
@@ -132,7 +134,7 @@ if __name__ == '__main__':
                 print(f'red bet count {red_bet_count}\n')
                 time.sleep(bet_success_sleep)
 
-            if team == 1:
+            if team == 1:  # Bet on red team
                 click(chat_coord[0], chat_coord[1], 1)
                 typewrite(bet_red)
                 press('enter')
@@ -143,4 +145,4 @@ if __name__ == '__main__':
                 time.sleep(bet_success_sleep)
 
         if not bet_status:
-            time.sleep(bet_fail_sleep)
+            time.sleep(bet_fail_sleep)  # Wait before scanning for bet status
