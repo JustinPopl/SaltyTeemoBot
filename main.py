@@ -1,15 +1,19 @@
 import pyscreenshot as ImageGrab
 import time
-from PIL import Image
+# from pymouse import PyMouse
+import PIL.Image
 from pytesseract import image_to_string
 from pyautogui import typewrite, click, press, hotkey
+from tkinter import *
+from pynput.mouse import Listener
+import win32gui
 
 # Initialize variables
-blue_rank_coord = [1150, 380, 1400, 700]  # Screen coordinates of blue team ranks
-red_rank_coord = [1150, 710, 1400, 1025]  # Screen coordinates of red team ranks
-screen_coord = [1260, 95, 1465, 120]  # Screen coordinates of bet status
-chat_coord = [1670, 950]  # Screen coordinates within chat box
-bet_amount = 500  # Amount to bet
+blue_rank_coord = [1175, 380, 1400, 700]  # Screen coordinates of blue team ranks
+red_rank_coord = [1175, 700, 1400, 1025]  # Screen coordinates of red team ranks
+screen_coord = [1420, 145, 1485, 185]  # Screen coordinates of bet status
+chat_coord = [1670, 960]  # Screen coordinates within chat box
+bet_amount = 5000  # Amount to bet
 bet_success_sleep = 300  # Time between successful bets
 bet_fail_sleep = 60  # Time between failed bets
 bet_status = False
@@ -24,21 +28,27 @@ website = 'https://gameinfo.saltyteemo.com/'
 
 
 # Compares the ranks between the two teams, scores them, and returns the team with the highest score
+# TODO add higher/lower win rates to comparison
 def compare():
 
-    click(red_rank_coord[0] / 2, red_rank_coord[1], 1)
+    set_window()
     time.sleep(1)
     hotkey('ctrl', 't')
     typewrite(website)
     press('enter')
     time.sleep(5)
     press('down')
+    press('down')
     blue_rank_area = ImageGrab.grab(bbox=blue_rank_coord)
     blue_rank_area.save(blue_image)
+    new_image_blue = blue_rank_area.resize((500, 500))
+    new_image_blue.save(blue_image)
     red_rank_area = ImageGrab.grab(bbox=red_rank_coord)
     red_rank_area.save(red_image)
-    blue_ranks = image_to_string(Image.open(blue_image), config='--psm 6')
-    red_ranks = image_to_string(Image.open(red_image), config='--psm 6')
+    new_image_red = red_rank_area.resize((500, 500))
+    new_image_red.save(red_image)
+    blue_ranks = image_to_string(PIL.Image.open(blue_image), config='--psm 6')
+    red_ranks = image_to_string(PIL.Image.open(red_image), config='--psm 6')
     blue_total = 0
     red_total = 0
     hotkey('ctrl', 'w')
@@ -109,16 +119,69 @@ def compare():
         return 1
 
 
+def on_click(x, y, button, pressed):
+    count = 0
+    if pressed == 1:
+        screen_coord[0] = x
+        screen_coord[1] = y
+        count = 1
+    if pressed == 0:
+        screen_coord[2] = x
+        screen_coord[3] = y
+        print(screen_coord)
+        count = 2
+    if count == 2:
+        return False
+
+
+def mouse_click():
+    with Listener(on_click=on_click) as listener:
+        listener.join()
+
+
+def window_enumeration_handler(hwnd, top_windows):
+    top_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
+
+
+def set_window():
+    top_windows = []
+    win32gui.EnumWindows(window_enumeration_handler, top_windows)
+    for i in top_windows:
+        if "twitch" in i[1].lower():
+            win32gui.SetForegroundWindow(i[0])
+
+
+def gui():
+    root = Tk()
+    frame = Frame(root, width=100, height=100)
+    button1 = Button(root, text='Coordinates', fg='red', command=mouse_click)
+    button2 = Button(root, text='Ranks', fg='blue', command=compare)
+    button3 = Button(root, text='Start', fg='black', command=root.destroy)
+    button1.bind('<Button-1>')
+    button2.bind('<Button-1>')
+    button3.bind('<Button-1>')
+    button1.pack(side=LEFT)
+    button2.pack(side=RIGHT)
+    button3.pack(side=BOTTOM)
+    frame.pack()
+    root.mainloop()
+
+
 if __name__ == '__main__':
 
+    gui()
+
+    time.sleep(1)
     while True:
 
         bet_status = False
         screen_area = ImageGrab.grab(bbox=screen_coord)
         # screen_area.show()
         screen_area.save(screen_image)
-        bet_state = image_to_string(Image.open(screen_image), config='--psm 7')
-        # print(bet_state)
+        # new_image = screen_area.resize((400, 400))
+        # new_image.save(screen_image)
+        bet_state = image_to_string(PIL.Image.open(screen_image), config='--psm 7')
+        print(bet_state)
 
         if 'open' in bet_state.lower():
 
